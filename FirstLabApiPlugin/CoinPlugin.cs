@@ -7,6 +7,8 @@ using UnityEngine;
 using ThrowableItem = LabApi.Features.Wrappers.ThrowableItem;
 using LabApi.Events.Handlers;
 using MEC;
+using System.Linq;
+using LabApi.Features.Extensions;
 
 namespace FirstLabApiPlugin
 {
@@ -18,7 +20,7 @@ namespace FirstLabApiPlugin
 
         public override string Description { get; } = "A plugin which allows coins to have unique effects when thrown";
 
-        public override Version Version { get; } = new Version(0, 0, 5, 0);
+        public override Version Version { get; } = new Version(0, 0, 6, 9);
 
         public override Version RequiredApiVersion { get; } = new Version(LabApi.Features.LabApiProperties.CompiledVersion);
 
@@ -46,7 +48,6 @@ namespace FirstLabApiPlugin
         {
             PlayerEvents.FlippedCoin -= OnCoinThrow;
         }
-
         public void SwitchRole(Player ev)
         {
             Vector3 evPosition = ev.Position;
@@ -195,10 +196,66 @@ namespace FirstLabApiPlugin
         public void DisableLights(Player ev)
         {
             Map.TurnOffLights();
-            Timing.CallDelayed(0.1f, () => Map.TurnOnLights());
-            ev.SendBroadcast("You haven't paid the electricity bill!", 5);
-           
+            Timing.CallDelayed(15f, () => Map.TurnOnLights());
+            ev.SendBroadcast("You haven't paid the electricity bill!", 5);  
         }
+        public void DisableElevators(Player ev)
+        {
+            Elevator.LockAll();
+            Timing.CallDelayed(15f, () => Elevator.UnlockAll());
+            ev.SendBroadcast("The elevators have gone under maintenance", 5);
+        }
+        public void KickPlayer(Player ev)
+        {
+            ev.SendBroadcast("You will be kicked in T-Minus: 5 seconds", 5);
+            Timing.CallDelayed(5f, () => Server.KickPlayer(ev, "Bad Luck"));
+        }
+        public void SwapPositions(Player ev)
+        {
+            List<Player> players = Player.List.Where(x => x != ev).ToList();
+            Player randomPlayer = players[random.Next(players.Count)];
+            
+            Vector3 evPosition = ev.Position;
+            Vector3 victimPosition = randomPlayer.Position;
+
+            ev.Position = victimPosition;
+            randomPlayer.Position = victimPosition;
+            
+            ev.SendBroadcast("You have switched positions with another player!", 5);
+            randomPlayer.SendBroadcast("You have switched positions with another player!", 5);
+        }
+
+
+        public void TeleportToRandomRoom(Player ev)
+        {
+            int index = random.Next(Map.Rooms.Count);
+            Room randomRoom = Map.Rooms.ElementAt(index);
+            ev.Position = randomRoom.Position;
+            ev.SendBroadcast("You have been teleported to a random room", 5);
+        }
+        public void TeleportARandomScp(Player ev)
+        {
+            var scps = Player.List.Where(x => x.Role.ToString().StartsWith("SCP")).ToList();
+            if (scps.Count != 0)
+            {
+                var randomScp = scps[random.Next(scps.Count)];
+
+                randomScp.Position = ev.Position;
+            }
+            ev.SendBroadcast("Something big has come for you!", 3);
+        }
+        public void DropAllItems(Player ev)
+        {
+            foreach (var item in ev.Items)
+            {
+                item.DropItem();
+            }
+            ev.SendBroadcast("You slipped!", 3);
+        }
+        //public void HandCuff(Player ev)
+        //{
+
+        //}
         public void OnCoinThrow(PlayerFlippedCoinEventArgs ev)
         {
             Player player = ev.Player;
