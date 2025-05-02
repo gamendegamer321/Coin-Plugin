@@ -8,7 +8,6 @@ using ThrowableItem = LabApi.Features.Wrappers.ThrowableItem;
 using LabApi.Events.Handlers;
 using MEC;
 using System.Linq;
-using LabApi.Features.Extensions;
 
 namespace FirstLabApiPlugin
 {
@@ -20,26 +19,11 @@ namespace FirstLabApiPlugin
 
         public override string Description { get; } = "A plugin which allows coins to have unique effects when thrown";
 
-        public override Version Version { get; } = new Version(0, 0, 6, 9);
+        public override Version Version { get; } = new Version(0, 0, 7, 0);
 
         public override Version RequiredApiVersion { get; } = new Version(LabApi.Features.LabApiProperties.CompiledVersion);
 
         public System.Random random = new System.Random();
-
-        /* random hp - done
-             * switch class - done
-             * card - done
-             * effect - done
-             * throwgrenade
-             * kill player - done
-             * set role as zombie - done
-             * set role as 3114 - done
-             * nothing - done
-             * clear inv - done
-             * maxhp - done
-             * grant a random scp item - done
-             * warhead - done
-        */
         public override void Enable()
         {
             PlayerEvents.FlippedCoin += OnCoinThrow;
@@ -252,14 +236,37 @@ namespace FirstLabApiPlugin
             }
             ev.SendBroadcast("You slipped!", 3);
         }
-        //public void HandCuff(Player ev)
-        //{
+        public void ChangeName(Player ev)
+        {
+            List<string> displayNames = new List<string>() { "Unlucky", "Coin Victim", "Gambler", "Unfamily guy" };
+            ev.DisplayName = displayNames[random.Next(displayNames.Count)];
+            ev.SendBroadcast($"Your new name is {ev.DisplayName}", 3);
+            Timing.CallDelayed(300f, () => ev.DisplayName = ev.Nickname);
 
-        //}
+        }
+        public void DropManyMedkits(Player ev)
+        {
+            for (int i = 0; i < 10; i++)
+            {
+                if (!ev.IsInventoryFull)
+                {
+                    var medkit = ev.AddItem(ItemType.Medkit);
+                    if (medkit is ThrowableItem throwable)
+                    {
+                        medkit.DropItem();
+                    }
+                }
+            }
+            ev.SendBroadcast("You praying to RNGESUS has payed off!", 5);
+        }
+        public void TurnToSpectator(Player ev)
+        {
+            ev.SetRole(PlayerRoles.RoleTypeId.Spectator);
+        }
         public void OnCoinThrow(PlayerFlippedCoinEventArgs ev)
         {
             Player player = ev.Player;
-            byte num = (byte)random.Next(1, 15);
+            byte num = (byte)random.Next(1, 24);
             switch (num)
             {
                 case 1: SwitchRole(player); break;
@@ -276,8 +283,18 @@ namespace FirstLabApiPlugin
                 case 12: SetRandomHp(player); break;
                 case 13: HighestTierCard(player); break;
                 case 14: DisableLights(player); break;
+                case 15: DisableElevators(player); break;
+                case 16: KickPlayer(player); break;
+                case 17: SwapPositions(player); break;
+                case 18: TeleportToRandomRoom(player); break;
+                case 19: TeleportARandomScp(player); break;
+                case 20: DropAllItems(player); break;
+                case 21: ChangeName(player); break;
+                case 22: DropManyMedkits(player); break;
+                case 23: TurnToSpectator(player); break;
+                
             }
-            Timing.CallDelayed(0.1f, () => ev.Player.RemoveItem(ev.CoinItem));
+            Timing.CallDelayed(0.1f, () => player.RemoveItem(ev.CoinItem));
 
         }
     }
