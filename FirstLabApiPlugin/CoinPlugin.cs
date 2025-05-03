@@ -19,7 +19,7 @@ namespace FirstLabApiPlugin
 
         public override string Description { get; } = "A plugin which allows coins to have unique effects when thrown";
 
-        public override Version Version { get; } = new Version(0, 0, 7, 0);
+        public override Version Version { get; } = new Version(0, 0, 7, 1);
 
         public override Version RequiredApiVersion { get; } = new Version(LabApi.Features.LabApiProperties.CompiledVersion);
 
@@ -86,19 +86,8 @@ namespace FirstLabApiPlugin
         }
         public void ThrowGrenade(Player ev)
         {
-            if (!ev.IsInventoryFull)
-            {
-                var grenade = ev.AddItem(ItemType.GrenadeHE);
-                if (grenade is ThrowableItem throwable)
-                {
-                    throwable.DropItem();
-                    ev.SendBroadcast("Watch your feet! Oh, it appears to be disarmed", 5);
-                }
-                else
-                {
-                    ev.SendBroadcast("Failed to throw grenade!", 5);
-                }
-            }
+            TimedGrenadeProjectile grenade = (TimedGrenadeProjectile)Projectile.Create(ItemType.GrenadeHE, ev.Position);
+            ev.SendBroadcast("Watch you feet!", 5);
         }
         public void StartWarhead(Player ev)
         {
