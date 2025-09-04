@@ -51,45 +51,47 @@ namespace CoinPlugin
 
         private static void SwitchRole(Player ev)
         {
-            var evPosition = ev.Position;
+            var role = RoleTypeId.None;
             switch (ev.Role)
             {
                 case RoleTypeId.NtfSergeant:
-                    ev.SetRole(RoleTypeId.ChaosRifleman);
+                    role = RoleTypeId.ChaosRifleman;
                     break;
                 case RoleTypeId.NtfPrivate:
-                    ev.SetRole(RoleTypeId.ChaosMarauder);
+                    role = RoleTypeId.ChaosMarauder;
                     break;
                 case RoleTypeId.NtfCaptain:
-                    ev.SetRole(RoleTypeId.ChaosRepressor);
+                    role = RoleTypeId.ChaosRepressor;
                     break;
                 case RoleTypeId.NtfSpecialist:
-                    ev.SetRole(RoleTypeId.ChaosConscript);
+                    role = RoleTypeId.ChaosConscript;
                     break;
                 case RoleTypeId.ChaosConscript:
-                    ev.SetRole(RoleTypeId.NtfSpecialist);
+                    role = RoleTypeId.NtfSpecialist;
                     break;
                 case RoleTypeId.ChaosRepressor:
-                    ev.SetRole(RoleTypeId.NtfCaptain);
+                    role = RoleTypeId.NtfCaptain;
                     break;
                 case RoleTypeId.ChaosMarauder:
-                    ev.SetRole(RoleTypeId.NtfPrivate);
+                    role = RoleTypeId.NtfPrivate;
                     break;
                 case RoleTypeId.ChaosRifleman:
-                    ev.SetRole(RoleTypeId.NtfSergeant);
+                    role = RoleTypeId.NtfSergeant;
                     break;
                 case RoleTypeId.Scientist:
-                    ev.SetRole(RoleTypeId.ClassD);
+                    role = RoleTypeId.ClassD;
                     break;
                 case RoleTypeId.ClassD:
-                    ev.SetRole(RoleTypeId.Scientist);
+                    role = RoleTypeId.Scientist;
                     break;
                 case RoleTypeId.FacilityGuard:
-                    ev.SetRole(RoleTypeId.ClassD);
+                    role = RoleTypeId.ClassD;
                     break;
             }
 
-            ev.Position = evPosition;
+            if (role == RoleTypeId.None) return;
+
+            ev.SetRole(role, flags: RoleSpawnFlags.AssignInventory);
             ev.SendHint($"<size=25><color=blue>[Coin Flip]</color>\nYour new class is: {ev.Role.ToString()}</size>", 5);
         }
 
@@ -288,7 +290,7 @@ namespace CoinPlugin
             for (var i = 0; i < 10; i++)
             {
                 if (ev.IsInventoryFull) break;
-                
+
                 var medkit = ev.AddItem(ItemType.Medkit);
                 if (medkit is ThrowableItem throwable)
                 {
