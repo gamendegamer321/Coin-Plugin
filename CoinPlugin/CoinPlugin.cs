@@ -1,5 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// --- [ Modification Notice ] ---
+// This file has been modified by gamendegamer321.
+// View the original version at: https://github.com/BorkoAXT/Coin-Plugin/blob/master/FirstLabApiPlugin/CoinPlugin.cs
+
+using System;
 using System.Linq;
 using LabApi.Events.Arguments.PlayerEvents;
 using LabApi.Events.Handlers;
