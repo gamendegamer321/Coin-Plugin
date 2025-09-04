@@ -1,15 +1,15 @@
-﻿using LabApi.Features.Wrappers;
-using System;
-using LabApi.Loader.Features.Plugins;
+﻿using System;
 using System.Collections.Generic;
-using LabApi.Events.Arguments.PlayerEvents;
-using UnityEngine;
-using ThrowableItem = LabApi.Features.Wrappers.ThrowableItem;
-using LabApi.Events.Handlers;
-using MEC;
 using System.Linq;
+using LabApi.Events.Arguments.PlayerEvents;
+using LabApi.Events.Handlers;
+using LabApi.Features.Wrappers;
+using LabApi.Loader.Features.Plugins;
+using MEC;
+using PlayerRoles;
+using ThrowableItem = LabApi.Features.Wrappers.ThrowableItem;
 
-namespace FirstLabApiPlugin
+namespace CoinPlugin
 {
     public class CoinPlugin : Plugin
     {
@@ -21,270 +21,360 @@ namespace FirstLabApiPlugin
 
         public override Version Version { get; } = new Version(0, 0, 7, 1);
 
-        public override Version RequiredApiVersion { get; } = new Version(LabApi.Features.LabApiProperties.CompiledVersion);
+        public override Version RequiredApiVersion { get; } =
+            new Version(LabApi.Features.LabApiProperties.CompiledVersion);
 
-        public System.Random random = new System.Random();
         public override void Enable()
         {
             PlayerEvents.FlippedCoin += OnCoinThrow;
         }
+
         public override void Disable()
         {
             PlayerEvents.FlippedCoin -= OnCoinThrow;
         }
-        public void SwitchRole(Player ev)
+
+        private static readonly Random Random = new Random();
+
+        private static readonly ItemType[] ScpItems =
+            { ItemType.MicroHID, ItemType.ParticleDisruptor, ItemType.Jailbird, ItemType.GunSCP127 };
+
+        private static readonly string[] Effects =
         {
-            Vector3 evPosition = ev.Position;
+            "Amnesia", "Slowness", "Blindness", "Flashed", "Deafened", "Asphyxiated", "Bleeding", "Bleeding",
+            "Blindness", "Exhausted", "Hemorrhage", "Invisibility", "SCP-1853", "Poisoned", "Bodyshot Reduction",
+            "Damage Reduction", "Movement boost"
+        };
+
+        private static readonly string[] DisplayNames = { "Unlucky", "Coin Victim", "Gambler", "Unfamily guy" };
+
+
+        private static void SwitchRole(Player ev)
+        {
+            var evPosition = ev.Position;
             switch (ev.Role)
             {
-                case PlayerRoles.RoleTypeId.NtfSergeant: ev.SetRole(PlayerRoles.RoleTypeId.ChaosRifleman); break;
-                case PlayerRoles.RoleTypeId.NtfPrivate: ev.SetRole(PlayerRoles.RoleTypeId.ChaosMarauder); break;
-                case PlayerRoles.RoleTypeId.NtfCaptain: ev.SetRole(PlayerRoles.RoleTypeId.ChaosRepressor); break;
-                case PlayerRoles.RoleTypeId.NtfSpecialist: ev.SetRole(PlayerRoles.RoleTypeId.ChaosConscript); break;
-
-                case PlayerRoles.RoleTypeId.ChaosConscript: ev.SetRole(PlayerRoles.RoleTypeId.NtfSpecialist); break;
-                case PlayerRoles.RoleTypeId.ChaosRepressor: ev.SetRole(PlayerRoles.RoleTypeId.NtfCaptain); break;
-                case PlayerRoles.RoleTypeId.ChaosMarauder: ev.SetRole(PlayerRoles.RoleTypeId.NtfPrivate); break;
-                case PlayerRoles.RoleTypeId.ChaosRifleman: ev.SetRole(PlayerRoles.RoleTypeId.NtfSergeant); break;
-
-                case PlayerRoles.RoleTypeId.Scientist: ev.SetRole(PlayerRoles.RoleTypeId.ClassD); break;
-                case PlayerRoles.RoleTypeId.ClassD: ev.SetRole(PlayerRoles.RoleTypeId.Scientist); break;
-
-                case PlayerRoles.RoleTypeId.FacilityGuard: ev.SetRole(PlayerRoles.RoleTypeId.ClassD); break;
+                case RoleTypeId.NtfSergeant:
+                    ev.SetRole(RoleTypeId.ChaosRifleman);
+                    break;
+                case RoleTypeId.NtfPrivate:
+                    ev.SetRole(RoleTypeId.ChaosMarauder);
+                    break;
+                case RoleTypeId.NtfCaptain:
+                    ev.SetRole(RoleTypeId.ChaosRepressor);
+                    break;
+                case RoleTypeId.NtfSpecialist:
+                    ev.SetRole(RoleTypeId.ChaosConscript);
+                    break;
+                case RoleTypeId.ChaosConscript:
+                    ev.SetRole(RoleTypeId.NtfSpecialist);
+                    break;
+                case RoleTypeId.ChaosRepressor:
+                    ev.SetRole(RoleTypeId.NtfCaptain);
+                    break;
+                case RoleTypeId.ChaosMarauder:
+                    ev.SetRole(RoleTypeId.NtfPrivate);
+                    break;
+                case RoleTypeId.ChaosRifleman:
+                    ev.SetRole(RoleTypeId.NtfSergeant);
+                    break;
+                case RoleTypeId.Scientist:
+                    ev.SetRole(RoleTypeId.ClassD);
+                    break;
+                case RoleTypeId.ClassD:
+                    ev.SetRole(RoleTypeId.Scientist);
+                    break;
+                case RoleTypeId.FacilityGuard:
+                    ev.SetRole(RoleTypeId.ClassD);
+                    break;
             }
+
             ev.Position = evPosition;
-            ev.SendBroadcast($"Your new class is: {ev.Role.ToString()}", 5);
+            ev.SendHint($"<size=25><color=blue>[Coin Flip]</color>\nYour new class is: {ev.Role.ToString()}</size>", 5);
         }
-        public void SetToZombie(Player ev)
+
+        private static void SetToZombie(Player ev)
         {
-            Vector3 evPosition = ev.Position;
-            ev.SetRole(PlayerRoles.RoleTypeId.Scp0492);
-            ev.Position = ev.Position;
-            ev.SendBroadcast("You wake up feeling a bit.. weird", 3);
+            ev.SetRole(RoleTypeId.Scp0492, flags: RoleSpawnFlags.AssignInventory);
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou wake up feeling a bit.. weird</size>", 5);
         }
-        public void SetToSkeleton(Player ev)
+
+        private static void SetToSkeleton(Player ev)
         {
-            Vector3 evPosition = ev.Position;
-            ev.SetRole(PlayerRoles.RoleTypeId.Scp3114);
-            ev.Position = ev.Position;
-            ev.SendBroadcast("You look like a pencil with limbs!", 5);
+            ev.SetRole(RoleTypeId.Scp3114, flags: RoleSpawnFlags.AssignInventory);
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou look like a pencil with limbs!</size>", 5);
         }
-        public void GrantAnScpWeapon(Player ev)
+
+        private static void GrantAnScpWeapon(Player ev)
         {
-            byte[] scpItems = { 16, 47, 50, 62 };
-            sbyte _ = (sbyte)random.Next(scpItems.Length);
             if (!ev.IsInventoryFull)
             {
-                Server.RunCommand($"give {ev.DisplayName} {_}");
-                ev.SendBroadcast("You have been given a random SCP weapon!", 5);
+                ev.AddItem(ScpItems[Random.Next(ScpItems.Length)]);
+                ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou have been given a random SCP weapon!</size>",
+                    5);
             }
             else
             {
-                ev.SendBroadcast("Unfortunately, your inventory was full!", 3);
+                ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nUnfortunately, your inventory was full!</size>",
+                    5);
             }
+        }
 
-        }
-        public void ThrowGrenade(Player ev)
+        private static void ThrowGrenade(Player ev)
         {
-            TimedGrenadeProjectile grenade = (TimedGrenadeProjectile)Projectile.Create(ItemType.GrenadeHE, ev.Position);
-            ev.SendBroadcast("Watch you feet!", 5);
+            var grenade = (TimedGrenadeProjectile)Pickup.Create(ItemType.GrenadeHE, ev.Position);
+            grenade.Base.ServerActivate();
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nWatch you feet!</size>", 5);
         }
-        public void StartWarhead(Player ev)
+
+        private static void StartWarhead(Player ev)
         {
             Warhead.Start();
-            ev.SendBroadcast("A warfare has started!", 3);
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nA warfare has started!</size>", 5);
         }
-        public void Nothing(Player ev)
+
+        private static void Nothing(Player ev)
         {
-            ev.SendBroadcast("Nothing happened!", 3);
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nNothing happened!</size>", 5);
         }
-        public void ClearInventory(Player ev)
+
+        private static void ClearInventory(Player ev)
         {
             ev.ClearInventory();
-            ev.SendBroadcast("You remember not taking your dementia pills today!", 5);
+            ev.SendHint(
+                "<size=25><color=blue>[Coin Flip]</color>\nYou remember not taking your dementia pills today!</size>",
+                5);
         }
-        public void SetMaxHp(Player ev)
+
+        private static void SetMaxHp(Player ev)
         {
-            byte randomMaxHealth = (byte)random.Next(100, 200);
+            var randomMaxHealth = Random.Next(100, 200);
             ev.MaxHealth = randomMaxHealth;
-            ev.SendBroadcast($"Your new max health is {randomMaxHealth}", 3);
+            ev.SendHint($"<size=25><color=blue>[Coin Flip]</color>\nYour new max health is {randomMaxHealth}</size>",
+                5);
         }
-        public void GiveEffect(Player ev)
+
+        private static void GiveEffect(Player ev)
         {
-            List<string> effects = new List<string>() { "Amnesia", "Slowness", "Blindness", "Flashed", "Deafened", "Asphyxiated", "Bleeding", "Bleeding", "Blindness", "Exhausted", "Hemorrhage", "Invisibility", "SCP-1853", "Poisoned", "Bodyshot Reduction", "Damage Reduction", "Movement boost" };
-            ushort randomEffect = (ushort)random.Next(effects.Count);
-            ev.ReferenceHub.playerEffectsController.ChangeState(effects[randomEffect], 10, 10f);
-            ev.SendBroadcast($"You have been diagnosed with {effects[randomEffect]} for 10 seconds!", 5);
+            var randomEffect = Random.Next(Effects.Length);
+            ev.ReferenceHub.playerEffectsController.ChangeState(Effects[randomEffect], 10, 10f);
+            ev.SendHint(
+                $"<size=25><color=blue>[Coin Flip]</color>\nYou have been diagnosed with {Effects[randomEffect]} for 10 seconds!</size>",
+                5);
         }
-        public void KillPlayer(Player ev)
+
+        private static void KillPlayer(Player ev)
         {
-            ev.Kill();
-            ev.SendBroadcast("You skipped a heartbeat!", 3);
+            ev.Kill("You skipped a heartbeat!");
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou skipped a heartbeat!</size>", 5);
         }
-        public void SetRandomHp(Player ev)
+
+        private static void SetRandomHp(Player ev)
         {
-            byte randomHealth = (byte)random.Next(1, 100);
+            var randomHealth = Random.Next(1, 100);
             ev.Health = randomHealth;
-            ev.SendBroadcast($"You are now at {randomHealth} health!", 3);
+            ev.SendHint($"<size=25><color=blue>[Coin Flip]</color>\nYou are now at {randomHealth} health!</size>", 5);
         }
-        public void HighestTierCard(Player ev)
+
+        private static void HighestTierCard(Player ev)
         {
-            sbyte highestKeycardId = -1;
-            ItemType highestLevel = 0;
-            foreach (var item in ev.ReferenceHub.inventory.UserInventory.Items)
+            var highestLevel = ItemType.None;
+            Item highestCard = null;
+            foreach (var item in ev.Items.Where(x => x.Category == ItemCategory.Keycard))
             {
-                if (item.Value.name.StartsWith("Keycard"))
-                {
-                    if ((int)item.Value.ItemTypeId > (int)highestLevel)
-                    {
-                        highestLevel = item.Value.ItemTypeId;
-                        highestKeycardId = (sbyte)item.Key;
-                    }
-                }
+                if ((int)item.Type <= (int)highestLevel) continue;
+
+                highestLevel = item.Type;
+                highestCard = item;
             }
-            if (highestKeycardId == -1)
+
+            if (highestLevel == ItemType.None || highestCard == null)
             {
                 if (ev.IsInventoryFull)
                 {
-                    ev.SendBroadcast("You don't have enough inventory space!", 5);
+                    ev.SendHint(
+                        "<size=25><color=blue>[Coin Flip]</color>\nYou don't have enough inventory space!</size>", 5);
                 }
                 else
                 {
                     ev.AddItem(ItemType.KeycardScientist);
-                    ev.SendBroadcast("You have been given a cool card!", 3);
+                    ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou have been given a cool card!</size>", 5);
                 }
+
                 return;
             }
+
             if (highestLevel == ItemType.KeycardO5)
             {
-                ev.SendBroadcast("You already have the highest level keycard!", 5);
+                ev.SendHint(
+                    "<size=25><color=blue>[Coin Flip]</color>\nYou already have the highest level keycard!</size>", 5);
                 return;
             }
-            ev.ReferenceHub.inventory.UserInventory.Items.Remove((ushort)highestKeycardId);
-            ItemType nextKeycard = (ItemType)(((int)highestLevel) + 1);
-            ev.AddItem(nextKeycard);
-            ev.SendBroadcast("Your card has been upgraded", 5);
 
+            ev.RemoveItem(highestCard);
+            ev.AddItem((ItemType)((int)highestLevel + 1));
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYour card has been upgraded</size>", 5);
         }
-        public void DisableLights(Player ev)
+
+        private static void DisableLights(Player ev)
         {
-            Map.TurnOffLights();
-            Timing.CallDelayed(15f, () => Map.TurnOnLights());
-            ev.SendBroadcast("You haven't paid the electricity bill!", 5);  
+            Map.TurnOffLights(15f);
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou haven't paid the electricity bill!</size>", 5);
         }
-        public void DisableElevators(Player ev)
+
+        private static void DisableElevators(Player ev)
         {
             Elevator.LockAll();
-            Timing.CallDelayed(15f, () => Elevator.UnlockAll());
-            ev.SendBroadcast("The elevators have gone under maintenance", 5);
+            Timing.CallDelayed(15f, Elevator.UnlockAll);
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nThe elevators have gone under maintenance</size>",
+                5);
         }
-        public void KickPlayer(Player ev)
+
+        private static void SwapPositions(Player ev)
         {
-            ev.SendBroadcast("You will be kicked in T-Minus: 5 seconds", 5);
-            Timing.CallDelayed(5f, () => Server.KickPlayer(ev, "Bad Luck"));
-        }
-        public void SwapPositions(Player ev)
-        {
-            List<Player> players = Player.List.Where(x => x != ev).ToList();
-            Player randomPlayer = players[random.Next(players.Count)];
-            
-            Vector3 evPosition = ev.Position;
-            Vector3 victimPosition = randomPlayer.Position;
+            var players = Player.List.Where(x => x != ev).ToList();
+            var randomPlayer = players[Random.Next(players.Count)];
+
+            var evPosition = ev.Position;
+            var victimPosition = randomPlayer.Position;
 
             ev.Position = victimPosition;
-            randomPlayer.Position = victimPosition;
-            
-            ev.SendBroadcast("You have switched positions with another player!", 5);
-            randomPlayer.SendBroadcast("You have switched positions with another player!", 5);
+            randomPlayer.Position = evPosition;
+
+            ev.SendHint(
+                "<size=25><color=blue>[Coin Flip]</color>\nYou have switched positions with another player!</size>", 5);
+            randomPlayer.SendHint(
+                "<size=25><color=blue>[Coin Flip]</color>\nYou have switched positions with another player!</size>", 5);
         }
 
 
-        public void TeleportToRandomRoom(Player ev)
+        private static void TeleportToRandomRoom(Player ev)
         {
-            int index = random.Next(Map.Rooms.Count);
-            Room randomRoom = Map.Rooms.ElementAt(index);
+            var index = Random.Next(Map.Rooms.Count);
+            var randomRoom = Map.Rooms.ElementAt(index);
             ev.Position = randomRoom.Position;
-            ev.SendBroadcast("You have been teleported to a random room", 5);
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou have been teleported to a random room</size>",
+                5);
         }
-        public void TeleportARandomScp(Player ev)
+
+        private static void TeleportARandomScp(Player ev)
         {
-            var scps = Player.List.Where(x => x.Role.ToString().StartsWith("SCP")).ToList();
+            var scps = Player.List.Where(x => x.Team == Team.SCPs && x.Role != RoleTypeId.Scp0492).ToList();
             if (scps.Count != 0)
             {
-                var randomScp = scps[random.Next(scps.Count)];
+                var randomScp = scps[Random.Next(scps.Count)];
 
                 randomScp.Position = ev.Position;
             }
-            ev.SendBroadcast("Something big has come for you!", 3);
-        }
-        public void DropAllItems(Player ev)
-        {
-            foreach (var item in ev.Items)
-            {
-                item.DropItem();
-            }
-            ev.SendBroadcast("You slipped!", 3);
-        }
-        public void ChangeName(Player ev)
-        {
-            List<string> displayNames = new List<string>() { "Unlucky", "Coin Victim", "Gambler", "Unfamily guy" };
-            ev.DisplayName = displayNames[random.Next(displayNames.Count)];
-            ev.SendBroadcast($"Your new name is {ev.DisplayName}", 3);
-            Timing.CallDelayed(300f, () => ev.DisplayName = ev.Nickname);
 
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nSomething big has come for you!</size>", 5);
         }
-        public void DropManyMedkits(Player ev)
+
+        private static void DropAllItems(Player ev)
         {
-            for (int i = 0; i < 10; i++)
+            ev.DropAllItems();
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou slipped!</size>", 5);
+        }
+
+        private static void ChangeName(Player ev)
+        {
+            ev.DisplayName = DisplayNames[Random.Next(DisplayNames.Length)];
+            ev.SendHint($"<size=25><color=blue>[Coin Flip]</color>\nYour new name is {ev.DisplayName}</size>", 5);
+            Timing.CallDelayed(300f, () => ev.DisplayName = ev.Nickname);
+        }
+
+        private static void DropManyMedkits(Player ev)
+        {
+            for (var i = 0; i < 10; i++)
             {
-                if (!ev.IsInventoryFull)
+                if (ev.IsInventoryFull) break;
+                
+                var medkit = ev.AddItem(ItemType.Medkit);
+                if (medkit is ThrowableItem throwable)
                 {
-                    var medkit = ev.AddItem(ItemType.Medkit);
-                    if (medkit is ThrowableItem throwable)
-                    {
-                        medkit.DropItem();
-                    }
+                    medkit.DropItem();
                 }
             }
-            ev.SendBroadcast("You praying to RNGESUS has payed off!", 5);
-        }
-        public void TurnToSpectator(Player ev)
-        {
-            ev.SetRole(PlayerRoles.RoleTypeId.Spectator);
-        }
-        public void OnCoinThrow(PlayerFlippedCoinEventArgs ev)
-        {
-            Player player = ev.Player;
-            byte num = (byte)random.Next(1, 24);
-            switch (num)
-            {
-                case 1: SwitchRole(player); break;
-                case 2: SetToZombie(player); break;
-                case 3: SetToSkeleton(player); break;
-                case 4: GrantAnScpWeapon(player); break;
-                case 5: ThrowGrenade(player); break;
-                case 6: StartWarhead(player); break;
-                case 7: Nothing(player); break;
-                case 8: ClearInventory(player); break;
-                case 9: SetMaxHp(player); break;
-                case 10: GiveEffect(player); break;
-                case 11: KillPlayer(player); break;
-                case 12: SetRandomHp(player); break;
-                case 13: HighestTierCard(player); break;
-                case 14: DisableLights(player); break;
-                case 15: DisableElevators(player); break;
-                case 16: KickPlayer(player); break;
-                case 17: SwapPositions(player); break;
-                case 18: TeleportToRandomRoom(player); break;
-                case 19: TeleportARandomScp(player); break;
-                case 20: DropAllItems(player); break;
-                case 21: ChangeName(player); break;
-                case 22: DropManyMedkits(player); break;
-                case 23: TurnToSpectator(player); break;
-                
-            }
-            Timing.CallDelayed(0.1f, () => player.RemoveItem(ev.CoinItem));
 
+
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou praying to RNGESUS has payed off!</size>", 5);
+        }
+
+        private static void OnCoinThrow(PlayerFlippedCoinEventArgs ev)
+        {
+            Timing.CallDelayed(5, () =>
+            {
+                var player = ev.Player;
+                var num = (byte)Random.Next(1, 22);
+                switch (num)
+                {
+                    case 1:
+                        SwitchRole(player);
+                        break;
+                    case 2:
+                        SetToZombie(player);
+                        break;
+                    case 3:
+                        SetToSkeleton(player);
+                        break;
+                    case 4:
+                        GrantAnScpWeapon(player);
+                        break;
+                    case 5:
+                        ThrowGrenade(player);
+                        break;
+                    case 6:
+                        StartWarhead(player);
+                        break;
+                    case 7:
+                        Nothing(player);
+                        break;
+                    case 8:
+                        ClearInventory(player);
+                        break;
+                    case 9:
+                        SetMaxHp(player);
+                        break;
+                    case 10:
+                        GiveEffect(player);
+                        break;
+                    case 11:
+                        KillPlayer(player);
+                        break;
+                    case 12:
+                        SetRandomHp(player);
+                        break;
+                    case 13:
+                        HighestTierCard(player);
+                        break;
+                    case 14:
+                        DisableLights(player);
+                        break;
+                    case 15:
+                        DisableElevators(player);
+                        break;
+                    case 16:
+                        DropManyMedkits(player);
+                        break;
+                    case 17:
+                        SwapPositions(player);
+                        break;
+                    case 18:
+                        TeleportToRandomRoom(player);
+                        break;
+                    case 19:
+                        TeleportARandomScp(player);
+                        break;
+                    case 20:
+                        DropAllItems(player);
+                        break;
+                    case 21:
+                        ChangeName(player);
+                        break;
+                }
+
+                Timing.CallDelayed(0.1f, () => player.RemoveItem(ev.CoinItem));
+            });
         }
     }
 }
