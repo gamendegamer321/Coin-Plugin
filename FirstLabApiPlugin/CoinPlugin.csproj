@@ -7,8 +7,8 @@
     <ProjectGuid>{DFF53E06-BA89-499B-9A70-FA515B681DE1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>FirstLabApiPlugin</RootNamespace>
-    <AssemblyName>FirstLabApiPlugin</AssemblyName>
+    <RootNamespace>CoinPlugin</RootNamespace>
+    <AssemblyName>CoinPlugin</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
