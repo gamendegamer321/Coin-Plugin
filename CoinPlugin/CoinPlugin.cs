@@ -26,7 +26,7 @@ namespace CoinPlugin
 
         public override string Description { get; } = "A plugin which allows coins to have unique effects when thrown";
 
-        public override Version Version { get; } = new Version(0, 0, 7, 1);
+        public override Version Version { get; } = new Version(1, 1, 0);
 
         public override Version RequiredApiVersion { get; } =
             new Version(LabApi.Features.LabApiProperties.CompiledVersion);
