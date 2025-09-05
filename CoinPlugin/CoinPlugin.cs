@@ -43,19 +43,30 @@ namespace CoinPlugin
         };
 
         private static readonly string[] DisplayNames = { "Unlucky", "Coin Victim", "Gambler", "Unfamily guy" };
-        
+
+        private int SkeletonCount;
+        private DateTime LastZombie;
+
         public override void Enable()
         {
             PlayerEvents.FlippedCoin += OnCoinThrow;
             PlayerEvents.ChangedRole += OnChangeRole;
+            ServerEvents.WaitingForPlayers += OnWaitingForPlayers;
         }
 
         public override void Disable()
         {
             PlayerEvents.FlippedCoin -= OnCoinThrow;
             PlayerEvents.ChangedRole -= OnChangeRole;
+            ServerEvents.WaitingForPlayers -= OnWaitingForPlayers;
         }
-        
+
+        private void OnWaitingForPlayers()
+        {
+            SkeletonCount = 0;
+            LastZombie = DateTime.MinValue;
+        }
+
         private void OnChangeRole(PlayerChangedRoleEventArgs ev)
         {
             var newRole = ev.NewRole.RoleTypeId;
@@ -115,14 +126,26 @@ namespace CoinPlugin
             ev.SendHint($"<size=25><color=blue>[Coin Flip]</color>\nYour new class is: {ev.Role.ToString()}</size>", 5);
         }
 
-        private static void SetToZombie(Player ev)
+        private void SetToZombie(Player ev)
         {
+            if (DateTime.Now.Subtract(LastZombie).TotalSeconds < Config.MinSecondsForZombie)
+            {
+                Nothing(ev);
+                return;
+            }
+
             ev.SetRole(RoleTypeId.Scp0492, flags: RoleSpawnFlags.AssignInventory);
             ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou wake up feeling a bit.. weird</size>", 5);
         }
 
-        private static void SetToSkeleton(Player ev)
+        private void SetToSkeleton(Player ev)
         {
+            if (SkeletonCount++ >= Config.Scp3114Limit)
+            {
+                Nothing(ev);
+                return;
+            }
+            
             ev.SetRole(RoleTypeId.Scp3114, flags: RoleSpawnFlags.AssignInventory);
             ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou look like a pencil with limbs!</size>", 5);
         }
@@ -149,9 +172,9 @@ namespace CoinPlugin
             ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nWatch you feet!</size>", 5);
         }
 
-        private static void StartWarhead(Player ev)
+        private void StartWarhead(Player ev)
         {
-            if (Round.Duration.TotalMinutes >= 2)
+            if (Round.Duration.TotalSeconds >= Config.MinSecondsForWarhead)
             {
                 Warhead.Start();
                 ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nA warfare has started!</size>", 5);
@@ -288,8 +311,24 @@ namespace CoinPlugin
                 5);
         }
 
-        private static void TeleportARandomScp(Player ev)
+        private void TeleportARandomScp(Player ev)
         {
+            if (ev.Zone == FacilityZone.Surface)
+            {
+                if (!Config.ScpCanTeleportToSurface)
+                {
+                    Nothing(ev);
+                    return;
+                }
+
+                if (Config.ScpTeleportToSurfaceMaxPlayers >= 0 &&
+                    Player.List.Count(x => x.Zone == FacilityZone.Surface) > Config.ScpTeleportToSurfaceMaxPlayers)
+                {
+                    Nothing(ev);
+                    return;
+                }
+            }
+
             var scps = Player.List.Where(x => x.Team == Team.SCPs && x.Role != RoleTypeId.Scp0492).ToList();
             if (scps.Count != 0)
             {
@@ -331,14 +370,22 @@ namespace CoinPlugin
             ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou praying to RNGESUS has payed off!</size>", 5);
         }
 
-        private static void OnCoinThrow(PlayerFlippedCoinEventArgs ev)
+        private void OnCoinThrow(PlayerFlippedCoinEventArgs ev)
         {
+            var player = ev.Player;
             Timing.CallDelayed(5, () =>
             {
-                var player = ev.Player;
-                var num = Random.Next(1, 22);
+                if (player.IsOffline || (Config.CanCancelCoin && player.CurrentItem?.Type != ItemType.Coin))
+                {
+                    return;
+                }
+
+                var num = Random.Next(20 + Config.NothingCount);
                 switch (num)
                 {
+                    case 0:
+                        DropAllItems(player);
+                        break;
                     case 1:
                         SwitchRole(player);
                         break;
@@ -358,7 +405,7 @@ namespace CoinPlugin
                         StartWarhead(player);
                         break;
                     case 7:
-                        Nothing(player);
+                        ChangeName(player);
                         break;
                     case 8:
                         ClearInventory(player);
@@ -396,11 +443,8 @@ namespace CoinPlugin
                     case 19:
                         TeleportARandomScp(player);
                         break;
-                    case 20:
-                        DropAllItems(player);
-                        break;
-                    case 21:
-                        ChangeName(player);
+                    default:
+                        Nothing(player);
                         break;
                 }
 
