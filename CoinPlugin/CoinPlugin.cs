@@ -8,8 +8,11 @@ using LabApi.Events.Arguments.PlayerEvents;
 using LabApi.Events.Handlers;
 using LabApi.Features.Wrappers;
 using LabApi.Loader.Features.Plugins;
+using MapGeneration;
 using MEC;
 using PlayerRoles;
+using UnityEngine;
+using Random = System.Random;
 using ThrowableItem = LabApi.Features.Wrappers.ThrowableItem;
 
 namespace CoinPlugin
@@ -134,8 +137,15 @@ namespace CoinPlugin
 
         private static void StartWarhead(Player ev)
         {
-            Warhead.Start();
-            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nA warfare has started!</size>", 5);
+            if (Round.Duration.TotalMinutes >= 2)
+            {
+                Warhead.Start();
+                ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nA warfare has started!</size>", 5);
+            }
+            else
+            {
+                Nothing(ev);
+            }
         }
 
         private static void Nothing(Player ev)
@@ -255,9 +265,11 @@ namespace CoinPlugin
 
         private static void TeleportToRandomRoom(Player ev)
         {
-            var index = Random.Next(Map.Rooms.Count);
-            var randomRoom = Map.Rooms.ElementAt(index);
-            ev.Position = randomRoom.Position;
+            var nonEndingRooms = Map.Rooms
+                .Where(x => x.Shape == RoomShape.Endroom || x.Shape == RoomShape.Undefined)
+                .ToArray();
+            var randomRoom = nonEndingRooms[Random.Next(nonEndingRooms.Length)];
+            ev.Position = randomRoom.Position + Vector3.up * 0.2f;
             ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou have been teleported to a random room</size>",
                 5);
         }
