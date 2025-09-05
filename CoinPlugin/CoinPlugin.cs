@@ -303,7 +303,7 @@ namespace CoinPlugin
         private static void TeleportToRandomRoom(Player ev)
         {
             var nonEndingRooms = Map.Rooms
-                .Where(x => x.Shape == RoomShape.Endroom || x.Shape == RoomShape.Undefined)
+                .Where(x => x.Shape != RoomShape.Endroom && x.Shape != RoomShape.Undefined)
                 .ToArray();
             var randomRoom = nonEndingRooms[Random.Next(nonEndingRooms.Length)];
             ev.Position = randomRoom.Position + Vector3.up * 0.2f;
