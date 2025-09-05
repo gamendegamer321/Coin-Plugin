@@ -1,4 +1,7 @@
-﻿using System.ComponentModel;
+﻿// --- [ Modification Notice ] ---
+// This file has been added by gamendegamer321.
+
+using System.ComponentModel;
 
 namespace CoinPlugin
 {
