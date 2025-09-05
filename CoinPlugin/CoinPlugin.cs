@@ -17,7 +17,7 @@ using Random = System.Random;
 
 namespace CoinPlugin
 {
-    public class CoinPlugin : Plugin
+    public class CoinPlugin : Plugin<Config>
     {
         public override string Author { get; } = "BorkoAXT";
 
@@ -29,16 +29,6 @@ namespace CoinPlugin
 
         public override Version RequiredApiVersion { get; } =
             new Version(LabApi.Features.LabApiProperties.CompiledVersion);
-
-        public override void Enable()
-        {
-            PlayerEvents.FlippedCoin += OnCoinThrow;
-        }
-
-        public override void Disable()
-        {
-            PlayerEvents.FlippedCoin -= OnCoinThrow;
-        }
 
         private static readonly Random Random = new Random();
 
@@ -53,7 +43,31 @@ namespace CoinPlugin
         };
 
         private static readonly string[] DisplayNames = { "Unlucky", "Coin Victim", "Gambler", "Unfamily guy" };
+        
+        public override void Enable()
+        {
+            PlayerEvents.FlippedCoin += OnCoinThrow;
+            PlayerEvents.ChangedRole += OnChangeRole;
+        }
 
+        public override void Disable()
+        {
+            PlayerEvents.FlippedCoin -= OnCoinThrow;
+            PlayerEvents.ChangedRole -= OnChangeRole;
+        }
+        
+        private void OnChangeRole(PlayerChangedRoleEventArgs ev)
+        {
+            var newRole = ev.NewRole.RoleTypeId;
+            Timing.CallDelayed(.5f, () =>
+            {
+                if (ev.Player.Role == newRole && Random.Next(100) < Config.SpawnCoinChance &&
+                    ev.Player.Items.All(x => x.Type != ItemType.Coin))
+                {
+                    ev.Player.AddItem(ItemType.Coin);
+                }
+            });
+        }
 
         private static void SwitchRole(Player ev)
         {

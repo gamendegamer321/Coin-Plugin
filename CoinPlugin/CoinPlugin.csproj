@@ -74,6 +74,7 @@ View the original version at: https://github.com/BorkoAXT/Coin-Plugin/blob/maste
     </ItemGroup>
     <ItemGroup>
         <Compile Include="CoinPlugin.cs"/>
+        <Compile Include="Config.cs" />
         <Compile Include="Properties\AssemblyInfo.cs"/>
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
