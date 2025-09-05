@@ -4,6 +4,7 @@
 
 using System;
 using System.Linq;
+using CustomPlayerEffects;
 using LabApi.Events.Arguments.PlayerEvents;
 using LabApi.Events.Handlers;
 using LabApi.Features.Wrappers;
@@ -145,7 +146,7 @@ namespace CoinPlugin
                 Nothing(ev);
                 return;
             }
-            
+
             ev.SetRole(RoleTypeId.Scp3114, flags: RoleSpawnFlags.AssignInventory);
             ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou look like a pencil with limbs!</size>", 5);
         }
@@ -370,6 +371,12 @@ namespace CoinPlugin
             ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nYou praying to RNGESUS has payed off!</size>", 5);
         }
 
+        private void PocketTeleport(Player ev)
+        {
+            ev.EnableEffect<PocketCorroding>();
+            ev.SendHint("<size=25><color=blue>[Coin Flip]</color>\nSCP-106 couldn't resist you!</size>", 5);
+        }
+
         private void OnCoinThrow(PlayerFlippedCoinEventArgs ev)
         {
             var player = ev.Player;
@@ -380,7 +387,7 @@ namespace CoinPlugin
                     return;
                 }
 
-                var num = Random.Next(20 + Config.NothingCount);
+                var num = Random.Next(21 + Config.NothingCount);
                 switch (num)
                 {
                     case 0:
@@ -442,6 +449,9 @@ namespace CoinPlugin
                         break;
                     case 19:
                         TeleportARandomScp(player);
+                        break;
+                    case 20:
+                        PocketTeleport(player);
                         break;
                     default:
                         Nothing(player);
