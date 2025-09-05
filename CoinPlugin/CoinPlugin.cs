@@ -10,10 +10,10 @@ using LabApi.Features.Wrappers;
 using LabApi.Loader.Features.Plugins;
 using MapGeneration;
 using MEC;
+using Mirror;
 using PlayerRoles;
 using UnityEngine;
 using Random = System.Random;
-using ThrowableItem = LabApi.Features.Wrappers.ThrowableItem;
 
 namespace CoinPlugin
 {
@@ -306,10 +306,10 @@ namespace CoinPlugin
             {
                 if (ev.IsInventoryFull) break;
 
-                var medkit = ev.AddItem(ItemType.Medkit);
-                if (medkit is ThrowableItem throwable)
+                var medkit = Pickup.Create(ItemType.Medkit, ev.Position, ev.Rotation);
+                if (medkit != null)
                 {
-                    medkit.DropItem();
+                    NetworkServer.Spawn(medkit.GameObject);
                 }
             }
 
@@ -322,7 +322,7 @@ namespace CoinPlugin
             Timing.CallDelayed(5, () =>
             {
                 var player = ev.Player;
-                var num = (byte)Random.Next(1, 22);
+                var num = Random.Next(1, 22);
                 switch (num)
                 {
                     case 1:
