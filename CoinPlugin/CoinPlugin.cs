@@ -297,7 +297,7 @@ namespace CoinPlugin
         {
             ev.DisplayName = DisplayNames[Random.Next(DisplayNames.Length)];
             ev.SendHint($"<size=25><color=blue>[Coin Flip]</color>\nYour new name is {ev.DisplayName}</size>", 5);
-            Timing.CallDelayed(300f, () => ev.DisplayName = ev.Nickname);
+            Timing.CallDelayed(300f, () => ev.DisplayName = null);
         }
 
         private static void DropManyMedkits(Player ev)
